@@ -12,14 +12,12 @@
   ],
   "require": {
     "php": "^7.0",
-    "psr/log": "^1.0"
+    "psr/log": "^1.0",
+    "monolog/monolog": "^1.24"
   },
   "autoload": {
     "psr-4": {
       "WebArch\\LogTools\\": "src/main"
     }
-  },
-  "suggest": {
-    "monolog/monolog": "Allows more advanced logging of the application flow"
   }
 }
