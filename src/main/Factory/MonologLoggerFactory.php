@@ -2,6 +2,7 @@
 
 namespace WebArch\LogTools\Factory;
 
+use Exception;
 use InvalidArgumentException;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
@@ -60,6 +61,7 @@ class MonologLoggerFactory
      * @param int $additionalStream Allows to duplicate output to STDOUT or STDERR.
      *
      * @return LoggerInterface
+     * @throws Exception
      */
     public function createDailyLogger(
         string $name,
@@ -194,6 +196,7 @@ class MonologLoggerFactory
      * @param int $additionalStream
      *
      * @return void
+     * @throws Exception
      */
     protected function appendAdditionalStream(Logger $logger, int $additionalStream)
     {

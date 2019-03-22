@@ -12,7 +12,7 @@ Install via [composer](https://getcomposer.org/)
 Use `\WebArch\LogTools\Traits\LogExceptionTrait` instead of `\Psr\Log\LoggerAwareTrait` in the class you want to be 
 able to log exceptions in more convenient way. Do not forget to implement `\Psr\Log\LoggerAwareInterface`.
 
-When an exception or error occures feel free to use `logException()` method to log it nice and easy. 
+When an exception or error occurs feel free to use `logException()` method to log it nice and easy. 
 
 ```php
 class Foo implements \Psr\Log\LoggerAwareInterface
