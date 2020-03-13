@@ -57,11 +57,11 @@ class MonologLoggerFactory
      * Creates logger with 'Y_m_d' timestamp as a filename.
      *
      * @param string $name Logger name to display in each log message. It does not affect the log filename.
-     * @param string|null $subFolder sub-folder under log directory to keep log files.
+     * @param null|string $subFolder sub-folder under log directory to keep log files.
      * @param int $additionalStream Allows to duplicate output to STDOUT or STDERR.
      *
-     * @return LoggerInterface
      * @throws Exception
+     * @return LoggerInterface
      */
     public function createDailyLogger(
         string $name,
@@ -195,8 +195,8 @@ class MonologLoggerFactory
      * @param Logger $logger
      * @param int $additionalStream
      *
-     * @return void
      * @throws Exception
+     * @return void
      */
     protected function appendAdditionalStream(Logger $logger, int $additionalStream)
     {
@@ -219,5 +219,4 @@ class MonologLoggerFactory
                 break;
         }
     }
-
 }
