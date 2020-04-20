@@ -27,10 +27,12 @@ trait LogExceptionTrait
         $this->logger->log(
             $logLevel,
             sprintf(
-                "[%s] %s (%s)",
+                "[%s] %s (%s) in %s:%d",
                 get_class($exception),
                 $exception->getMessage(),
-                $exception->getCode()
+                $exception->getCode(),
+                $exception->getFile(),
+                $exception->getLine()
             ),
             array_merge(
                 $context,
