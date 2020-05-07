@@ -25,12 +25,14 @@ Usage
 Use `\WebArch\LogTools\Traits\LogExceptionTrait` instead of `\Psr\Log\LoggerAwareTrait` in the class you want to be 
 able to log exceptions in more convenient way. Do not forget to implement `\Psr\Log\LoggerAwareInterface`.
 
-When an exception or error occurs feel free to use `logException()` method to log it nice and easy. 
+When an exception or error occurs feel free to use `logException()` method to log it nice and easy. Exception chaining
+is enabled by default, but in case you don't need it you can use `setChaining(false)` method.
 
 ```php
+use Monolog\Handler\StreamHandler;
+use Monolog\Logger;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LogLevel;
-use Psr\Log\NullLogger;
 use WebArch\LogTools\Traits\LogExceptionTrait;
 
 class FooService implements LoggerAwareInterface
@@ -39,31 +41,26 @@ class FooService implements LoggerAwareInterface
 
     public function __construct()
     {
-        $this->setLogger(new NullLogger());
+        $this->setLogger(
+            new Logger(
+                'FooLogger',
+                [new StreamHandler(sys_get_temp_dir() . '/foo-service.log')]
+            )        
+        );
     }
 
     public function bar()
     {
         try {
 
-            throw new LogicException('Exception occures in ' . __METHOD__);
+            throw new LogicException('Exception occurs in ' . __METHOD__);
 
         } catch (Throwable $exception) {
 
             /**
-             * Exception will be logged with type, message, code and stack trace.
+             * Exception will be logged with it's type, message, code, file, line and stack trace.
              */
-            $this->logException(
-                $exception,
-                /**
-                 * Set custom log message level(optional).
-                 */
-                LogLevel::CRITICAL,
-                /**
-                 * Additional context(optional).
-                 */
-                ['var1' => 'ABC']
-            );
+            $this->logException($exception, LogLevel::CRITICAL, ['var1' => 'ABC']);
         }
     }
 

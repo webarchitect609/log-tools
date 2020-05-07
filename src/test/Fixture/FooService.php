@@ -14,16 +14,18 @@ class FooService implements LoggerAwareInterface
 {
     use LogExceptionTrait;
 
-    public function triggerExceptionCascade()
+    public function triggerExceptionCascade(?bool $enableChaining)
     {
         try {
+            if (is_bool($enableChaining)) {
+                $this->setChaining($enableChaining);
+            }
             $this->triggerInvalidArgumentException();
         } catch (Throwable $exception) {
             $this->logException(
                 $exception,
                 LogLevel::EMERGENCY,
-                ['foo' => 'bar'],
-                true
+                ['foo' => 'bar']
             );
         }
     }

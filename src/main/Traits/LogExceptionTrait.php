@@ -1,4 +1,4 @@
-<?php /** @noinspection PhpUnused */
+<?php
 
 namespace WebArch\LogTools\Traits;
 
@@ -11,20 +11,25 @@ trait LogExceptionTrait
     use LoggerAwareTrait;
 
     /**
-     * Logs any exception properly: with the stack trace, with all previous exceptions, etc.
+     * @var bool If true, all the exception chain will be logged.
+     */
+    private $chaining = true;
+
+    /**
+     * Logs any exception properly: with the stack trace, with all previous exceptions, with exception chaining(if
+     * enabled, of course), etc.
      *
      * @param Throwable $exception Any error to be logged.
      * @param string $logLevel Log message level.
-     * @param array $context Additional log message context. By default the stack trace is in the key 'trace'.
-     * @param bool $enableChaining If true, all the exception chain will be logged.
+     * @param array $context Additional log message context. By default the stack trace is in the key 'trace' and
+     *     if previous exception exists it is in the 'previous' key.
      *
      * @return void
      */
     protected function logException(
         Throwable $exception,
         string $logLevel = LogLevel::ERROR,
-        array $context = [],
-        bool $enableChaining = false
+        array $context = []
     ) {
         $this->logger->log(
             $logLevel,
@@ -34,12 +39,11 @@ trait LogExceptionTrait
                 $this->getContext($exception)
             )
         );
-        if (true === $enableChaining && $exception->getPrevious() instanceof Throwable) {
+        if ($this->isChaining() && $exception->getPrevious() instanceof Throwable) {
             $this->logException(
                 $exception->getPrevious(),
                 $logLevel,
-                $context,
-                $enableChaining
+                $context
             );
         }
     }
@@ -51,9 +55,7 @@ trait LogExceptionTrait
      */
     protected function getContext(Throwable $exception): array
     {
-        $context = [
-            'trace' => $exception->getTraceAsString(),
-        ];
+        $context = ['trace' => explode(PHP_EOL, $exception->getTraceAsString())];
         if ($exception->getPrevious() instanceof Throwable) {
             $context['previous'] = $this->getExceptionAsString($exception->getPrevious());
         }
@@ -77,4 +79,27 @@ trait LogExceptionTrait
             $exception->getLine()
         );
     }
+
+    /**
+     * @return bool
+     */
+    protected function isChaining(): bool
+    {
+        return $this->chaining;
+    }
+
+    /**
+     * Enables or disables exception chaining support.
+     *
+     * @param bool $chaining
+     *
+     * @return $this
+     */
+    protected function setChaining(bool $chaining)
+    {
+        $this->chaining = $chaining;
+
+        return $this;
+    }
+
 }
