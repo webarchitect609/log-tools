@@ -10,6 +10,10 @@ git:
   depth: 3
   quiet: true
 
+env:
+  global:
+    - XDEBUG_MODE=coverage
+
 before_script:
   - (composer self-update; true)
   - composer install --no-progress --no-suggest --no-interaction --no-cache
