@@ -1,4 +1,8 @@
-/.php_cs.cache
+.php_cs.cache
+.php-cs-fixer.cache
+php-cs-fixer
+php-cs-fixer.phar
+.php_cs
 /.phpunit.result.cache
 /build/
 /composer.lock

@@ -1,6 +1,18 @@
 Changelog
 =========
 
+2.0.0
+-----
+
+### BREAKING CHANGE:
+
+- `php: ^7.4`
+- removed `MonologLoggerFactory::createDailyLogger()`
+
+### Added:
+
+- `MonologLoggerFactory::createFileLogger()`
+
 1.3.0
 -----
 

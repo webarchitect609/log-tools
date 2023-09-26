@@ -3,45 +3,26 @@
 namespace WebArch\LogTools\Factory;
 
 use Exception;
-use InvalidArgumentException;
+use Monolog\Formatter\FormatterInterface;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
-use Psr\Log\LoggerInterface;
 use WebArch\LogTools\Enum\SystemStream;
+use WebArch\LogTools\Exception\InvalidArgumentException;
 
 class MonologLoggerFactory
 {
-    const DEFAULT_SUB_FOLDER = 'main';
-
     /**
-     * @var array
+     * @var array<string, Logger>
      */
-    protected $loggerStack = [];
+    protected array $loggerStack = [];
 
-    /**
-     * @var string
-     */
-    protected $logDir;
+    protected string $logDir;
 
-    /**
-     * @var bool
-     */
-    protected $debug;
+    protected bool $debug;
 
-    /**
-     * @var string
-     */
-    protected $defaultSubFolder;
+    protected int $defaultLogLevel = Logger::INFO;
 
-    /**
-     * @var int
-     */
-    protected $defaultLogLevel = Logger::INFO;
-
-    /**
-     * @var int
-     */
-    protected $debugLogLevel = Logger::DEBUG;
+    protected int $debugLogLevel = Logger::DEBUG;
 
     public function __construct(string $logDir, bool $debug = false)
     {
@@ -50,80 +31,69 @@ class MonologLoggerFactory
         }
         $this->logDir = $logDir;
         $this->debug = $debug;
-        $this->setDefaultSubFolder(self::DEFAULT_SUB_FOLDER);
     }
 
     /**
-     * Creates logger with 'Y_m_d' timestamp as a filename.
+     * Creates a logger which writes to the file $relativeFilePath
      *
-     * @param string $name Logger name to display in each log message. It does not affect the log filename.
-     * @param null|string $subFolder sub-folder under log directory to keep log files.
-     * @param int $additionalStream Allows to duplicate output to STDOUT or STDERR.
+     * @param string                  $name Logger name to display in each log message. It does not affect the log
+     *     filename.
+     * @param string                  $relativeFilePath Relative path and file name('foo/bar.log') or just
+     *     filename('baz.log')
+     * @param int                     $stdStream Allows to duplicate output to STDOUT or STDERR.
+     * @param null|FormatterInterface $formatter
      *
      * @throws Exception
-     * @return LoggerInterface
+     * @return Logger
      */
-    public function createDailyLogger(
-        string $name,
-        string $subFolder = null,
-        int $additionalStream = SystemStream::NONE
-    ): LoggerInterface {
-        if (is_null($subFolder)) {
-            $subFolder = $this->defaultSubFolder;
-        }
-
+    public function createFileLogger(
+        string              $name,
+        string              $relativeFilePath,
+        int                 $stdStream = SystemStream::NONE,
+        ?FormatterInterface $formatter = null
+    ): Logger {
+        $name = trim($name);
+        $relativeFilePath = trim($relativeFilePath);
         /**
-         * $name and $subFolder are not checked here
-         * as logger with empty name or subFolder will never be created.
+         * $name and $relativeFilePath are not checked here
+         * as logger with empty name or relativeFilePath will never be created.
          */
-        $loggerKey = $this->getLoggerKey($name, $subFolder);
-        if (array_key_exists($loggerKey, $this->loggerStack)) {
+        $loggerKey = $this->getLoggerKey($name, $relativeFilePath);
+        if (key_exists($loggerKey, $this->loggerStack)) {
             return $this->loggerStack[$loggerKey];
         }
-
-        if ('' === trim($name)) {
+        if ('' === $name) {
             throw new InvalidArgumentException(
                 'Empty logger name is not allowed.'
             );
         }
-        if ('' === trim($subFolder)) {
+        if ('' === $relativeFilePath) {
             throw new InvalidArgumentException(
-                'Empty subFolder name is not allowed.'
+                'Empty logger filepath is not allowed.'
             );
         }
+        if (strpos($relativeFilePath, DIRECTORY_SEPARATOR) === 0) {
+            throw new InvalidArgumentException(
+                sprintf(
+                    'Logger filepath must be relative, not start with "%s".',
+                    DIRECTORY_SEPARATOR
+                )
+            );
+        }
+        $this->loggerStack[$loggerKey] = $this->appendStdStream(
+            new Logger(
+                $name,
+                [new StreamHandler($this->logDir . DIRECTORY_SEPARATOR . $relativeFilePath, $this->getLogLevel())]
+            ),
+            $stdStream
+        );
+        if ($formatter) {
+            foreach ($this->loggerStack[$loggerKey]->getHandlers() as $handler) {
+                $handler->setFormatter($formatter);
+            }
+        }
 
-        $logFilename =
-            $this->logDir . DIRECTORY_SEPARATOR .
-            $subFolder . DIRECTORY_SEPARATOR .
-            date('Y_m_d') . '.log';
-
-        $logger = new Logger($name, [new StreamHandler($logFilename, $this->getLogLevel())]);
-
-        $this->appendAdditionalStream($logger, $additionalStream);
-
-        $this->loggerStack[$this->getLoggerKey($name, $subFolder)] = $logger;
-
-        return $logger;
-    }
-
-    /**
-     * @return string
-     */
-    public function getDefaultSubFolder(): string
-    {
-        return $this->defaultSubFolder;
-    }
-
-    /**
-     * @param string $defaultSubFolder
-     *
-     * @return $this
-     */
-    public function setDefaultSubFolder(string $defaultSubFolder)
-    {
-        $this->defaultSubFolder = $defaultSubFolder;
-
-        return $this;
+        return $this->loggerStack[$loggerKey];
     }
 
     /**
@@ -139,7 +109,7 @@ class MonologLoggerFactory
      *
      * @return $this
      */
-    public function setDefaultLogLevel(int $defaultLogLevel)
+    public function setDefaultLogLevel(int $defaultLogLevel): self
     {
         $this->defaultLogLevel = $defaultLogLevel;
 
@@ -159,24 +129,11 @@ class MonologLoggerFactory
      *
      * @return $this
      */
-    public function setDebugLogLevel(int $debugLogLevel)
+    public function setDebugLogLevel(int $debugLogLevel): self
     {
         $this->debugLogLevel = $debugLogLevel;
 
         return $this;
-    }
-
-    /**
-     * Returns unique key for logger
-     *
-     * @param string $name
-     * @param string $subFolder
-     *
-     * @return string
-     */
-    protected function getLoggerKey(string $name, string $subFolder): string
-    {
-        return trim($name) . '@' . trim($subFolder);
     }
 
     /**
@@ -193,30 +150,39 @@ class MonologLoggerFactory
 
     /**
      * @param Logger $logger
-     * @param int $additionalStream
+     * @param int    $stream
      *
      * @throws Exception
      * @return void
      */
-    protected function appendAdditionalStream(Logger $logger, int $additionalStream)
+    protected function appendStdStream(Logger $logger, int $stream): Logger
     {
-        switch ($additionalStream) {
-
+        switch ($stream) {
             case SystemStream::STDOUT:
-
                 if (defined('STDOUT') && is_resource(STDOUT)) {
                     $logger->pushHandler(new StreamHandler(STDOUT, $this->getLogLevel()));
                 }
-
                 break;
-
             case SystemStream::STDERR:
-
                 if (defined('STDERR') && is_resource(STDERR)) {
                     $logger->pushHandler(new StreamHandler(STDERR, $this->getLogLevel()));
                 }
-
                 break;
         }
+
+        return $logger;
+    }
+
+    /**
+     * Returns unique key for logger
+     *
+     * @param string $name
+     * @param string $relativeFilePath
+     *
+     * @return string
+     */
+    protected function getLoggerKey(string $name, string $relativeFilePath): string
+    {
+        return $name . '@' . $relativeFilePath;
     }
 }

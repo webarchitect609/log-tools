@@ -13,7 +13,7 @@ trait LogExceptionTrait
     /**
      * @var bool If true, all the exception chain will be logged.
      */
-    private $chaining = true;
+    private bool $chaining = true;
 
     /**
      * Logs any exception properly: with the stack trace, with all previous exceptions, with exception chaining(if
@@ -21,7 +21,7 @@ trait LogExceptionTrait
      *
      * @param Throwable $exception Any error to be logged.
      * @param string $logLevel Log message level.
-     * @param array $context Additional log message context. By default the stack trace is in the key 'trace' and
+     * @param array $context Additional log message context. By default, the stack trace is in the key 'trace' and
      *     if previous exception exists it is in the 'previous' key.
      *
      * @return void
@@ -30,7 +30,7 @@ trait LogExceptionTrait
         Throwable $exception,
         string $logLevel = LogLevel::ERROR,
         array $context = []
-    ) {
+    ): void {
         $this->logger->log(
             $logLevel,
             $this->getExceptionAsString($exception),
@@ -94,6 +94,8 @@ trait LogExceptionTrait
      * @param bool $chaining
      *
      * @return $this
+     * @noinspection PhpMissingReturnTypeInspection
+     * @noinspection ReturnTypeCanBeDeclaredInspection
      */
     protected function setChaining(bool $chaining)
     {

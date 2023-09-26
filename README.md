@@ -11,6 +11,7 @@ PSR-3 compatible logger tools
 
 Features
 --------
+
 - Log any exception properly: with the stack trace, with all previous exceptions, etc
 - Daily logger: setup directory with log files with 'Y_m_d' timestamp as a filename
 
@@ -20,9 +21,10 @@ Installation
 
 Usage
 -----
+
 ### LogExceptionTrait
 
-Use `\WebArch\LogTools\Traits\LogExceptionTrait` instead of `\Psr\Log\LoggerAwareTrait` in the class you want to be 
+Use `\WebArch\LogTools\Traits\LogExceptionTrait` instead of `\Psr\Log\LoggerAwareTrait` in the class you want to be
 able to log exceptions in more convenient way. Do not forget to implement `\Psr\Log\LoggerAwareInterface`.
 
 When an exception or error occurs feel free to use `logException()` method to log it nice and easy. Exception chaining
@@ -69,7 +71,7 @@ class FooService implements LoggerAwareInterface
 
 ### MonologLoggerFactory
 
-Use `\WebArch\LogTools\Factory\MonologLoggerFactory` to simplify creating logs on daily basis. 
+Use `\WebArch\LogTools\Factory\MonologLoggerFactory` to simplify creating logs on daily basis.
 
 ```php
 use WebArch\LogTools\Enum\SystemStream;
@@ -77,10 +79,10 @@ use WebArch\LogTools\Factory\MonologLoggerFactory;
 
 $debug = false;
 $loggerFactory = new MonologLoggerFactory('/tmp/log/www', $debug);
-$logger = $loggerFactory->createDailyLogger('bar', 'foo', SystemStream::STDERR);
+$logger = $loggerFactory->createFileLogger('bar', 'foo/baz.log', SystemStream::STDERR);
 
 /**
- * Creates `/tmp/log/www/foo/2019_02_15.log`
+ * Creates `/tmp/log/www/foo/baz.log`
  * and outputs `[2019-02-15 12:42:59] bar.INFO: Hello, world! [] []` there
  * and to the STDERR. 
  */
@@ -88,7 +90,6 @@ $logger->info(
     'Hello, world!'
 );
 ```
-
 
 Known Issues
 ------------
